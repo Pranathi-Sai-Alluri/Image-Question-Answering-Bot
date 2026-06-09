@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLIP Image Question Answering</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:#f2f2f2;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:20px;
+        }
+
+        .container{
+            width:100%;
+            max-width:500px;
+            background:white;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1{
+            text-align:center;
+            margin-bottom:20px;
+            color:#333;
+        }
+
+        input[type="file"],
+        input[type="text"]{
+            width:100%;
+            padding:12px;
+            margin-bottom:15px;
+            border:1px solid #ccc;
+            border-radius:6px;
+            font-size:16px;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            border:none;
+            background:black;
+            color:white;
+            font-size:16px;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            opacity:0.9;
+        }
+
+        .preview-section{
+            margin-top:20px;
+            text-align:center;
+        }
+
+        .preview-section img{
+            width:100%;
+            max-height:300px;
+            object-fit:contain;
+            border-radius:10px;
+            border:1px solid #ddd;
+        }
+
+        .result{
+            margin-top:20px;
+            padding:15px;
+            background:#f9f9f9;
+            border-radius:8px;
+        }
+
+        .result p{
+            margin-top:10px;
+            font-size:18px;
+            color:#333;
+        }
+
+        .loading{
+            text-align:center;
+            margin-top:15px;
+            color:blue;
+            font-weight:bold;
+        }
+
+        .error{
+            text-align:center;
+            margin-top:15px;
+            color:red;
+            font-weight:bold;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>BLIP Image QA</h1>
+
+    <!-- Upload Image -->
+    <input type="file" id="imageInput" accept="image/*">
+
+    <!-- Question -->
+    <input
+        type="text"
+        id="questionInput"
+        placeholder="Ask question about image..."
+    >
+
+    <!-- Button -->
+    <button onclick="askQuestion()">
+        Ask AI
+    </button>
+
+    <!-- Loading -->
+    <div class="loading" id="loading"></div>
+
+    <!-- Error -->
+    <div class="error" id="error"></div>
+
+    <!-- Image Preview -->
+    <div class="preview-section">
+        <img id="previewImage" style="display:none;">
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="resultBox" style="display:none;">
+
+        <h3>Generated Output</h3>
+
+        <p id="questionText"></p>
+
+        <p id="answerText"></p>
+
+    </div>
+
+</div>
+
+<script>
+
+async function askQuestion(){
+
+    // Clear old messages
+    document.getElementById("loading").innerText = "";
+    document.getElementById("error").innerText = "";
+
+    // Get inputs
+    const imageFile =
+        document.getElementById("imageInput").files[0];
+
+    const question =
+        document.getElementById("questionInput").value;
+
+    // Validation
+    if(!imageFile || !question){
+
+        document.getElementById("error").innerText =
+            "Please upload image and enter question";
+
+        return;
+    }
+
+    // Show image preview
+    const preview =
+        document.getElementById("previewImage");
+
+    preview.src = URL.createObjectURL(imageFile);
+
+    preview.style.display = "block";
+
+    // Show loading
+    document.getElementById("loading").innerText =
+        "AI is generating answer...";
+
+    // Create form data
+    const formData = new FormData();
+
+    formData.append("image", imageFile);
+
+    formData.append("question", question);
+
+    try{
+
+        // Send request to FastAPI
+        const response = await fetch("/ask", {
+
+            method: "POST",
+
+            body: formData
+
+        });
+
+        // Convert response
+        const data = await response.json();
+
+        // Hide loading
+        document.getElementById("loading").innerText = "";
+
+        // Show result section
+        document.getElementById("resultBox").style.display =
+            "block";
+
+        // Display question
+        document.getElementById("questionText").innerText =
+            "Question: " + question;
+
+        // Display answer
+        document.getElementById("answerText").innerText =
+            "Answer: " + data.answer;
+
+    }
+
+    catch(error){
+
+        document.getElementById("loading").innerText = "";
+
+        document.getElementById("error").innerText =
+            "Error connecting to FastAPI backend";
+
+        console.log(error);
+    }
+
+}
+
+</script>
+
+</body>
+</html>
+```
